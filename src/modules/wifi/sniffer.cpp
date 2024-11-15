@@ -487,7 +487,7 @@ void sniffer_setup() {
       tft.setCursor(10, tft.getCursorY()+10);
       tft.println("Sniffer Mode: " + String(_only_HS?"Only EAPOL/HS":"All packets Sniff"));
       tft.setCursor(10, tft.getCursorY()+10);
-      //tft.println(String(BTN_ALIAS) + ": Options Menu");
+      // tft.println(String(BTN_ALIAS) + ": Options Menu");
       if (macStr[0] != '\0' && ssidStr[0] != '\0') {
         tft.setTextColor(TFT_RED, bruceConfig.bgColor);
         tft.println(String(macStr) + "-> " + String(ssidStr) + " | " + String(rssi) + " dBm");
