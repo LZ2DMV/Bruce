@@ -53,7 +53,6 @@ bool _only_HS=false; // option to only save handshakes and EAPOL pcaps
 int num_EAPOL=0;
 int num_HS=0;
 uint32_t packet_counter = 0;
-int8_t rssi;
 char macStr[18];
 char ssidStr[33] = {0};
 int8_t rssi;
