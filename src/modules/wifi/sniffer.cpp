@@ -53,6 +53,11 @@ bool _only_HS=false; // option to only save handshakes and EAPOL pcaps
 int num_EAPOL=0;
 int num_HS=0;
 uint32_t packet_counter = 0;
+int8_t rssi;
+char macStr[18];
+char ssidStr[33] = {0};
+int8_t rssi;
+bool showProbes = false;
 
 File _pcap_file;
 std::set<BeaconList> registeredBeacons;
@@ -246,6 +251,23 @@ void sniffer(void *buf, wifi_promiscuous_pkt_type_t type){
   const uint16_t frameControl = (uint16_t)frame[0] | ((uint16_t)frame[1] << 8);
   const uint8_t frameType = (frameControl & 0x0C) >> 2;
   const uint8_t frameSubType = (frameControl & 0xF0) >> 4;
+
+ // Probe Request detection
+  if (frameType == 0x00 && frameSubType == 0x04) {
+    const uint8_t *senderAddr = frame->payload + 10; // Offset 10 is the source MAC address
+    snprintf(macStr, sizeof(macStr), "%02X:%02X:%02X:%02X:%02X:%02X",
+           senderAddr[0], senderAddr[1], senderAddr[2],
+           senderAddr[3], senderAddr[4], senderAddr[5]);
+    const uint8_t *frameBody = frame->payload + 24; // Frame body starts after 24-byte header
+    if (frameBody[0] == 0x00) { // Check if SSID field is present
+      uint8_t ssidLength = frameBody[1];
+      if (ssidLength <= 32) {
+          memcpy(ssidStr, frameBody + 2, ssidLength);
+          ssidStr[ssidLength] = '\0';
+      }
+    }
+    rssi = ctrl.rssi;
+   }
 
   if(isItEAPOL(pkt)){
     //if(_only_HS) newPacketSD(timestamp, microseconds, len, pkt->payload, _pcap_file);
@@ -472,7 +494,13 @@ void sniffer_setup() {
       padprintln("File: " + filename);
       padprintln("Sniffer Mode: " + String(_only_HS?"Only EAPOL/HS":"All packets Sniff"));
       padprintln(deauth?"Deauth: ON":"Deauth: OFF");
-      padprintln(String(BTN_ALIAS) + ": Options Menu");
+      if (showProbes) {
+  	if (macStr[0] != '\0' && ssidStr[0] != '\0') {
+    	  padprintln("Probe: "+ String(macStr) + "-> " + String(ssidStr) + " (" + String(rssi) + ")");
+  	} else {
+  	  padprintln(String(BTN_ALIAS) + ": Options Menu");
+  	}
+      }
       tft.drawRightString("Ch." + String(ch<10?"0":"") + String(ch) + "(Next)",WIDTH-10, HEIGHT-18,1);
     }
 
