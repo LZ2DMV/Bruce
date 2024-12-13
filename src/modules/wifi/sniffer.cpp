@@ -254,11 +254,11 @@ void sniffer(void *buf, wifi_promiscuous_pkt_type_t type){
 
  // Probe Request detection
   if (frameType == 0x00 && frameSubType == 0x04) {
-    const uint8_t *senderAddr = frame->payload + 10; // Offset 10 is the source MAC address
+    const uint8_t *senderAddr = frame + 10; // Offset 10 is the source MAC address
     snprintf(macStr, sizeof(macStr), "%02X:%02X:%02X:%02X:%02X:%02X",
            senderAddr[0], senderAddr[1], senderAddr[2],
            senderAddr[3], senderAddr[4], senderAddr[5]);
-    const uint8_t *frameBody = frame->payload + 24; // Frame body starts after 24-byte header
+    const uint8_t *frameBody = frame + 24; // Frame body starts after 24-byte header
     if (frameBody[0] == 0x00) { // Check if SSID field is present
       uint8_t ssidLength = frameBody[1];
       if (ssidLength <= 32) {
