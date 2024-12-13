@@ -479,6 +479,7 @@ void sniffer_setup() {
           {deauth?"Deauth->OFF":"Deauth->ON",      [&]()    { deauth=!deauth; }},
           {_only_HS?"All packets":"EAPOL/HS only", [=]()    { _only_HS=!_only_HS; }},
           {"Reset Counter", [=]()    { packet_counter=0; num_EAPOL=0; num_HS=0; }},
+	  {showProbes?"Hide Probes":"Show Probes", [=]()    { showProbes=!showProbes; }},
           {"Exit Sniffer", [=]()    { returnToMenu=true; }},
         };
         loopOptions(options);
