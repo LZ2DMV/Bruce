@@ -497,10 +497,8 @@ void sniffer_setup() {
       if (showProbes) {
   	if (macStr[0] != '\0' && ssidStr[0] != '\0') {
     	  padprintln("Probe: "+ String(macStr) + "-> " + String(ssidStr) + " (" + String(rssi) + ")");
-  	} else {
-  	  padprintln(String(BTN_ALIAS) + ": Options Menu");
   	}
-      }
+      } else padprintln(String(BTN_ALIAS) + ": Options Menu");
       tft.drawRightString("Ch." + String(ch<10?"0":"") + String(ch) + "(Next)",WIDTH-10, HEIGHT-18,1);
     }
 
