@@ -329,8 +329,8 @@ void otherIRcodes() {
     else if(codes[i].protocol.startsWith("RC6"))    options.push_back({ codes[i].name.c_str(), [=](){ sendRC6Command(codes[i].address, codes[i].command); addToRecentCodes(codes[i]); }});
     else if(codes[i].protocol.startsWith("Samsung")) options.push_back({ codes[i].name.c_str(), [=](){ sendSamsungCommand(codes[i].address, codes[i].command); addToRecentCodes(codes[i]); }});
     else if(codes[i].protocol=="SIRC")   options.push_back({ codes[i].name.c_str(), [=](){ sendSonyCommand(codes[i].address, codes[i].command); addToRecentCodes(codes[i]); }});
-    else if(codes[i].protocol!="" && codes[i].data!="")   options.push_back({ codes[i].name.c_str(), [=](){ sendDecodedCommand(codes[i].protocol, codes[i].data); addToRecentCodes(codes[i]); }});
     else if(codes[i].protocol=="Panasonic")   options.push_back({ codes[i].name.c_str(), [=](){ sendPanasonicCommand(codes[i].address, codes[i].command); addToRecentCodes(codes[i]); }});
+    else if(codes[i].protocol!="" && codes[i].data!="")   options.push_back({ codes[i].name.c_str(), [=](){ sendDecodedCommand(codes[i].protocol, codes[i].data); addToRecentCodes(codes[i]); }});
   }
   options.push_back({ "Main Menu" , [&](){ exit=true; }});
   databaseFile.close();
@@ -355,6 +355,10 @@ void sendNECCommand(String address, String command) {
   if(first_zero_byte_pos!=-1) address = address.substring(0, first_zero_byte_pos);
   first_zero_byte_pos = command.indexOf("00", 2);
   if(first_zero_byte_pos!=-1) command = command.substring(0, first_zero_byte_pos);
+
+  address.replace(" ", "");
+  command.replace(" ", "");
+
   uint16_t addressValue = strtoul(address.c_str(), nullptr, 16);
   uint16_t commandValue = strtoul(command.c_str(), nullptr, 16);
   uint64_t data = irsend.encodeNEC(addressValue, commandValue);
@@ -362,7 +366,6 @@ void sendNECCommand(String address, String command) {
   Serial.println("Sent NEC Command");
   digitalWrite(bruceConfig.irTx, LED_OFF);
 }
-
 
 void sendRC5Command(String address, String command) {
   IRsend irsend(bruceConfig.irTx,true);  // Set the GPIO to be used to sending the message.
@@ -410,11 +413,20 @@ void sendSonyCommand(String address, String command) {
   uint16_t commandValue = strtoul(command.substring(0,2).c_str(), nullptr, 16);
   uint16_t addressValue = strtoul(address.substring(0,2).c_str(), nullptr, 16);
   uint16_t addressValue2 = strtoul(address.substring(3,6).c_str(), nullptr, 16);
-  uint16_t nbits = 12;
-  if(addressValue2>0) nbits = 20;
-  else if(addressValue>=0x80) nbits = 15;
-  uint32_t data = irsend.encodeSony(nbits,commandValue,addressValue);
-  irsend.sendSony(data,20,10);
+
+  uint16_t nbits = 12; // 12 bits (SIRC)
+  if(addressValue2>0) nbits = 20; // 20 bits (SIRC20)
+  else if(addressValue>0x1F) nbits = 15; // 15 bits (SIRC15)
+
+  uint32_t data;
+  if (nbits == 20) {
+    data = irsend.encodeSony(nbits, commandValue, addressValue, addressValue2);
+  } else {
+    data = irsend.encodeSony(nbits, commandValue, addressValue);
+  }
+
+  // 1 initial + 2 repeat
+  irsend.sendSony(data, nbits, 2);
   Serial.println("Sent Sony Command");
   digitalWrite(bruceConfig.irTx, LED_OFF);
 }
@@ -447,8 +459,8 @@ void sendPanasonicCommand(String address, String command) {
 
 bool sendDecodedCommand(String protocol, String value, String bits) {
   // https://github.com/crankyoldgit/IRremoteESP8266/blob/master/examples/SmartIRRepeater/SmartIRRepeater.ino
-
-  decode_type_t type = strToDecodeType(protocol.c_str());
+  
+    decode_type_t type = strToDecodeType(protocol.c_str());
   if(type == decode_type_t::UNKNOWN) return false;
   uint16_t nbit_int = bits.toInt();
 
@@ -472,7 +484,6 @@ bool sendDecodedCommand(String protocol, String value, String bits) {
     success = irsend.send(type, state, state_pos);  // safer
 
   } else {
-
     value.replace(" ", "");
     uint64_t value_int = strtoull(value.c_str(), nullptr, 16);
 
