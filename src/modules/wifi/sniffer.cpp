@@ -120,7 +120,40 @@ void saveHandshake(const wifi_promiscuous_pkt_t* packet, bool beacon, FS &Fs) {
     apAddr = addr2;
   }
 
+  if (beacon) {
+    const uint8_t *ieStart = packet->payload + 36;  // Start of Information Elements (IEs)
+    bool ssidFound = false;
+    char ssid[33]; // SSID can be up to 32 characters + null terminator
+	  
+    memset(ssid, 0, sizeof(ssid));
+    // Iterate through the IEs to find the SSID element
+    const uint8_t *currentIE = ieStart;
+    while (currentIE < packet->payload + packet->rx_ctrl.sig_len) {
+       uint8_t elementID = currentIE[0];
+       uint8_t length = currentIE[1];
+	if (elementID == 0x00) { // SSID Element ID
+	  // SSID found, extract it
+	     memcpy(ssid, currentIE + 2, length);
+	     ssid[length] = '\0';
+	     ssidFound = true;
+	      break;
+	}
+	currentIE += (2 + length);
+    }
+       if (ssidFound) {
+	  Serial.print("SSID: ");
+	  Serial.println(ssid);
+	 } else {
+	   Serial.println("SSID not found in beacon frame");
+	 }
+  }
+
   char nomFichier[50];
+
+  // char nomFichier[128];
+  // snprintf(nomFichier, sizeof(nomFichier), "/BrucePCAP/handshakes/HS_%02X%02X%02X%02X%02X%02X_%s.pcap",
+             // apAddr[0], apAddr[1], apAddr[2], apAddr[3], apAddr[4], apAddr[5], ssid);
+
   sprintf(nomFichier, "/BrucePCAP/handshakes/HS_%02X%02X%02X%02X%02X%02X.pcap",
           apAddr[0], apAddr[1], apAddr[2], apAddr[3], apAddr[4], apAddr[5]);
 
