@@ -123,10 +123,10 @@ void saveHandshake(const wifi_promiscuous_pkt_t* packet, bool beacon, FS &Fs) {
   if (beacon) {
     const uint8_t *ieStart = packet->payload + 36;  // Start of Information Elements (IEs)
     bool ssidFound = false;
-    char ssid[33]; // SSID can be up to 32 characters + null terminator
-	  
+    char ssid[33];
+
     memset(ssid, 0, sizeof(ssid));
-    // Iterate through the IEs to find the SSID element
+
     const uint8_t *currentIE = ieStart;
     while (currentIE < packet->payload + packet->rx_ctrl.sig_len) {
        uint8_t elementID = currentIE[0];
@@ -143,9 +143,9 @@ void saveHandshake(const wifi_promiscuous_pkt_t* packet, bool beacon, FS &Fs) {
        if (ssidFound) {
 	  Serial.print("SSID: ");
 	  Serial.println(ssid);
-	 } else {
-	   Serial.println("SSID not found in beacon frame");
-	 }
+       } else {
+	  Serial.println("SSID not found in beacon frame");
+       }
   }
 
   char nomFichier[50];
